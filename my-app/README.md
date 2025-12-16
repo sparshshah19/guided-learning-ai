@@ -1,16 +1,56 @@
-# React + Vite
+Guided Learning AI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Overview**
 
-Currently, two official plugins are available:
+Guided Learning AI is a lightweight React application built to encourage active thinking before AI assistance. Rather than immediately providing answers, the app guides users through a structured process that helps them externalize their understanding, refine their questions, and then engage in a guided AI conversation.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**Problem Being Solved**
 
-## React Compiler
+Modern AI tools often optimize for speed and direct answers, which can reduce meaningful learning and critical thinking. Students frequently rely on AI-generated responses without fully engaging with the underlying concepts.
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+Guided Learning AI addresses this gap by introducing intentional friction before AI interaction, ensuring users actively think, reflect, and articulate their understanding.
 
-## Expanding the ESLint configuration
+**Solution**
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+The application enforces a three-step learning flow that prioritizes cognitive engagement before AI output:
+
+a) Brain Dump – Users write down what they already know.
+b)Question Refinement – Users clarify and focus their question.
+c) Guided AI Chat – AI responses are provided only after the first two steps are completed.
+
+Each step must be completed before progressing, reinforcing thoughtful interaction.
+
+**User Flow**
+-User enters a brain dump with a minimum of 30 words.
+-clicking Keep writing to unlock enables the next step.
+- User refines their question.
+- A guided chat interface opens, responding based on the refined question.
+- All transitions are managed through local React state.
+
+**Gemini AI Integration**
+
+/api/gemini middleware route proxies requests to Gemini when an API key is available
+
+Graceful fallback responses are returned when no API key is present
+
+Allows the frontend to function without additional configuration
+
+**Tech Stack**
+
+-React
+-Vite
+-JavaScript
+-Gemini AI API
+
+Setup & Installation
+npm install
+npm run dev
+
+Optional Environment Variable
+
+**To enable live AI responses, add:**
+
+GEMINI_API_KEY=your_api_key_here
+
+If no API key is provided, the app will return fallback responses.
+
