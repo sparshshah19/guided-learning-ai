@@ -15,7 +15,7 @@ Guided Learning AI addresses this gap by introducing intentional friction before
 The application enforces a three-step learning flow that prioritizes cognitive engagement before AI output:
 
 a) Brain Dump – Users write down what they already know.
-b)Question Refinement – Users clarify and focus their question.
+b) Question Refinement – Users clarify and focus their question.
 c) Guided AI Chat – AI responses are provided only after the first two steps are completed.
 
 Each step must be completed before progressing, reinforcing thoughtful interaction.
