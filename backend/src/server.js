@@ -1,27 +1,35 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { askGemini } from "./geminiClient.js";
+import path from "path";
 import crypto from "crypto";
+import { askGemini } from "./geminiClient.js";
+
 
 dotenv.config();
 
-// for learning apis this creates the server
+console.log("KEY EXISTS?", !!process.env.GEMINI_API_KEY);
+//  Load env once (works when you run `npm run dev` from backend/)
+
+
+/// dotenv.config({ path: path.resolve(process.cwd(), ".env") }); ///
+console.log("CWD:", process.cwd());
+console.log("ENV PATH USED:", path.resolve(process.cwd(), ".env"));
+console.log("Key starts with:", (process.env.GEMINI_API_KEY || "").slice(0, 6));
+console.log(" GEMINI key loaded?", !!process.env.GEMINI_API_KEY);
+console.log("Key length:", (process.env.GEMINI_API_KEY || "").length);
+
 const app = express();
-// tells the frontend to talk to the backend
 app.use(cors());
-//allows the conversion to JSON
 app.use(express.json());
 
-// (optional) makes clicking the link not show "Cannot GET /"
+// Basic routes
 app.get("/", (req, res) => {
-  res.send("Backend is running ✅ Try /health or POST /api/ask");
+  res.send("Backend is running  Try /health or POST /api/ask");
 });
-
-//tests the endpoint
 app.get("/health", (req, res) => res.json({ ok: true }));
 
-//in-mem sessions
+// In-memory sessions
 const sessions = new Map();
 
 function safeJsonParse(text) {
@@ -84,7 +92,7 @@ ${transcript}
 `;
 }
 
-// Reset endpoint (optional, but lifesaver during dev)
+// Reset endpoint (optional)
 app.post("/api/reset", (req, res) => {
   const { sessionId } = req.body || {};
   if (sessionId && sessions.has(sessionId)) sessions.delete(sessionId);
@@ -93,11 +101,20 @@ app.post("/api/reset", (req, res) => {
 
 app.post("/api/ask", async (req, res) => {
   try {
-    console.log("REQ BODY:", req.body);
-    const { sessionId, message } = req.body;
+    const { sessionId, message } = req.body || {};
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({
+        error: "Gemini failed",
+        message: "GEMINI_API_KEY not loaded on server",
+      });
+    }
 
     if (!message || typeof message !== "string") {
-      return res.status(400).json({ error: "Missing message" });
+      return res.status(400).json({
+        error: "Bad request",
+        message: "Expected JSON body: { message: string, sessionId?: string }",
+      });
     }
 
     const id =
@@ -111,31 +128,36 @@ app.post("/api/ask", async (req, res) => {
 
     const session = sessions.get(id);
 
-    // store user message
+    // Store user message
     session.history.push({ role: "user", content: message });
 
-    // build prompt
+    // Build prompt for Gemini
     const llmPrompt =
       session.questionsAsked < 3
-        ? buildGuidingPrompt(session.history, session.questionsAsked, session.askedSet)
+        ? buildGuidingPrompt(
+            session.history,
+            session.questionsAsked,
+            session.askedSet
+          )
         : buildFinalPrompt(session.history);
+
+    // Helpful debug (won’t leak secrets)
+    console.log("Prompt length:", llmPrompt.length);
 
     const raw = await askGemini(llmPrompt);
     const parsed = safeJsonParse(raw);
 
-    // helper to rotate fallback questions (prevents loops)
     const pickFallback = () =>
       [
-        "What is the exact goal you’re trying to achieve (one sentence)?",
+        "What is the exact goal you’re trying to achieve?",
         "What have you tried so far, and what happened?",
         "What part feels most confusing right now?",
       ][session.questionsAsked] || "What detail would unlock the solution?";
 
-    // Fallback if Gemini returns non-JSON
+    // If Gemini returns non-JSON, fall back safely
     if (!parsed) {
       if (session.questionsAsked < 3) {
         const fallback = pickFallback();
-
         session.questionsAsked += 1;
         session.askedSet.add(normalizeQuestion(fallback));
         session.history.push({ role: "assistant", content: fallback });
@@ -148,7 +170,7 @@ app.post("/api/ask", async (req, res) => {
         });
       }
 
-      // after 3, treat raw as final
+      // After 3 questions, treat raw as final
       session.history.push({ role: "assistant", content: raw });
       return res.json({
         sessionId: id,
@@ -158,15 +180,13 @@ app.post("/api/ask", async (req, res) => {
       });
     }
 
-    // question path
+    // Question response path
     if (parsed.type === "question") {
       const qText = (parsed.text || "").trim();
       const key = normalizeQuestion(qText);
 
-      // If empty or repeated, force a different fallback question
       if (!qText || session.askedSet.has(key)) {
         const fallback = pickFallback();
-
         session.questionsAsked += 1;
         session.askedSet.add(normalizeQuestion(fallback));
         session.history.push({ role: "assistant", content: fallback });
@@ -191,35 +211,29 @@ app.post("/api/ask", async (req, res) => {
       });
     }
 
-    // if it wasn't "question", only accept "final"; otherwise fall back safely
-    if (parsed.type !== "final") {
-      session.history.push({ role: "assistant", content: raw });
-      return res.json({
-        sessionId: id,
-        type: "final",
-        answer: raw,
-        explanation: "",
-      });
-    }
+    // Final response path (default)
+    session.history.push({
+      role: "assistant",
+      content: parsed.answer || "",
+    });
 
-    // final
-    session.history.push({ role: "assistant", content: parsed.answer || "" });
     return res.json({
       sessionId: id,
       type: "final",
       answer: parsed.answer || "",
       explanation: parsed.explanation || "",
     });
-    } catch (e) {
-    console.error("API /api/ask failed:", e);
+  } catch (err) {
+    console.error("🔥 Gemini error FULL:", err);
     return res.status(500).json({
       error: "Gemini failed",
-      details: String(e?.message || e),
+      message: err?.message || String(err),
+      // Helpful if SDK provides these
+      status: err?.status,
+      statusText: err?.statusText,
     });
   }
-}); // ✅ close the route
+});
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () =>
-  console.log(`Backend running on http://localhost:${PORT}`)
-);
+app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));

@@ -1,17 +1,18 @@
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-if (!process.env.GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY is not set");
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-const model = genAI.getGenerativeModel({
-    model: "models/gemini-flash-latest"
-});
+const MODEL_NAME = "models/gemini-2.5-flash";
 
 export async function askGemini(prompt) {
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY missing at runtime");
+  }
+  if (!prompt || typeof prompt !== "string") {
+    throw new Error("Prompt must be a non-empty string");
+  }
+
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+
+  const result = await model.generateContent(prompt);
+  return result.response.text();
 }
