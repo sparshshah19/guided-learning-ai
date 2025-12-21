@@ -1,9 +1,11 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import path from "path";
+
 import crypto from "crypto";
 import { askGemini } from "./geminiClient.js";
+import rateLimit from "express-rate-limit";
+
 
 
 dotenv.config();
@@ -12,9 +14,8 @@ console.log("KEY EXISTS?", !!process.env.GEMINI_API_KEY);
 //  Load env once (works when you run `npm run dev` from backend/)
 
 
-/// dotenv.config({ path: path.resolve(process.cwd(), ".env") }); ///
 console.log("CWD:", process.cwd());
-console.log("ENV PATH USED:", path.resolve(process.cwd(), ".env"));
+
 console.log("Key starts with:", (process.env.GEMINI_API_KEY || "").slice(0, 6));
 console.log(" GEMINI key loaded?", !!process.env.GEMINI_API_KEY);
 console.log("Key length:", (process.env.GEMINI_API_KEY || "").length);
@@ -22,6 +23,13 @@ console.log("Key length:", (process.env.GEMINI_API_KEY || "").length);
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const askLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 15,             // 15 requests per IP per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Basic routes
 app.get("/", (req, res) => {
@@ -98,6 +106,8 @@ app.post("/api/reset", (req, res) => {
   if (sessionId && sessions.has(sessionId)) sessions.delete(sessionId);
   return res.json({ ok: true });
 });
+
+app.use("/api/ask", askLimiter);
 
 app.post("/api/ask", async (req, res) => {
   try {
@@ -236,4 +246,4 @@ app.post("/api/ask", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));
+app.listen(PORT, "0.0.0.0", () => console.log(`Listening on ${PORT}`));
