@@ -1,4 +1,6 @@
-WATCH THE DEMO VID HERE: - https://www.linkedin.com/posts/sparshshahh_learninginpublic-building-ai-activity-7408641721644773376-uWHF?utm_source=share&utm_medium=member_desktop&rcm=ACoAADm-SLYBULpxyeNvKsobna6BBa8jXpd8buY
+WATCH THE DEMO VID HERE: 
+
+https://www.linkedin.com/posts/sparshshahh_learninginpublic-building-ai-activity-7408641721644773376-uWHF?utm_source=share&utm_medium=member_desktop&rcm=ACoAADm-SLYBULpxyeNvKsobna6BBa8jXpd8buY
 
 **Overview**
 
