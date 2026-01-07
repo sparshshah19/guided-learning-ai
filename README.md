@@ -36,12 +36,12 @@ Allows the frontend to function without additional configuration
 
 **Tech Stack**
 
--React
--Vite
--JavaScript
--Node.js
--Express
--Gemini AI API
+- React
+- Vite
+- JavaScript
+- Node.js
+- Express
+- Gemini AI API
 
 **Setup & Installation:** 
 npm install npm run dev
