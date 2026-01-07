@@ -1,6 +1,6 @@
-WATCH THE DEMO VID HERE: 
+Watch The Demo Video Here: 
 
-https://www.linkedin.com/posts/sparshshahh_learninginpublic-building-ai-activity-7408641721644773376-uWHF?utm_source=share&utm_medium=member_desktop&rcm=ACoAADm-SLYBULpxyeNvKsobna6BBa8jXpd8buY
+https://www.linkedin.com/feed/update/urn:li:activity:7408641721644773376/
 
 **Overview**
 
@@ -48,6 +48,6 @@ npm install npm run dev
 
 To enable live AI responses, add:
 
-GEMINI_API_KEY=your_api_key_here
+GEMINI_API_KEY=your_api_key_here 
 
 If no API key is provided, the app will return fallback responses.
